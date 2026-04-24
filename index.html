@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="id" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kasir Matematika</title>
+  
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+  
+  <style>
+    * { 
+      font-family: 'Nunito', sans-serif; 
+      box-sizing: border-box; 
+    }
+    .money-btn { transition: all 0.15s ease; cursor: pointer; }
+    .money-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+    .money-btn:active { transform: translateY(2px); box-shadow: none; }
+    
+    .shake { animation: shake 0.4s ease; }
+    @keyframes shake { 
+      0%, 100% { transform: translateX(0) } 
+      25% { transform: translateX(-8px) } 
+      75% { transform: translateX(8px) } 
+    }
+    
+    .pop-in { animation: popIn 0.3s ease; }
+    @keyframes popIn { 
+      0% { transform: scale(0.5); opacity: 0 } 
+      100% { transform: scale(1); opacity: 1 } 
+    }
+    
+    /* Efek Print Struk */
+    .printer-slot {
+      background: #1e293b;
+      height: 12px;
+      border-radius: 10px;
+      margin: 0 auto;
+      width: 90%;
+      position: relative;
+      z-index: 20;
+      box-shadow: inset 0 5px 5px rgba(0,0,0,0.6);
+    }
+    .receipt {
+      background: #ffffff;
+      position: relative;
+      padding-bottom: 25px;
+      margin-top: -6px;
+      z-index: 10;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+      border-radius: 4px 4px 0 0;
+    }
+    .receipt::after {
+      content: "";
+      position: absolute;
+      bottom: -8px;
+      left: 0;
+      width: 100%;
+      height: 8px;
+      background: linear-gradient(-45deg, transparent 6px, #ffffff 0), linear-gradient(45deg, transparent 6px, #ffffff 0);
+      background-size: 12px 8px;
+      background-repeat: repeat-x;
+    }
+    @keyframes printReceipt {
+      0% { transform: translateY(-100%); opacity: 0; clip-path: inset(100% 0 0 0); }
+      100% { transform: translateY(0); opacity: 1; clip-path: inset(0 0 0 0); }
+    }
+    .anim-print {
+      animation: printReceipt 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+
+    /* Tampilan Responsif Koin & Uang */
+    .money-img-grid { 
+      width: 100%; 
+      object-fit: contain; 
+      border-radius: 6px; 
+      pointer-events: none; 
+      height: 40px; /* Ukuran default HP */
+    }
+    .pure-money {
+      width: auto;
+      object-fit: contain;
+      cursor: pointer;
+      transition: transform 0.2s ease, filter 0.2s ease;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
+      border-radius: 4px;
+      height: 45px; /* Ukuran default HP */
+    }
+    .pure-money:hover {
+      transform: scale(1.1) translateY(-4px);
+      filter: drop-shadow(0 6px 12px rgba(239,68,68,0.6));
+      z-index: 30;
+    }
+
+    /* Laptop & Tablet */
+    @media (min-width: 640px) {
+      .money-img-grid { height: 50px; }
+      .pure-money { height: 55px; }
+    }
+
+    .toggle-checkbox:checked { right: 0; border-color: #0ea5e9; }
+    .toggle-checkbox:checked + .toggle-label { background-color: #0ea5e9; }
+    
+    /* Font ala struk untuk item */
+    .receipt-font { font-family: 'Space Mono', monospace; color: #334155;}
+  </style>
+</head>
+<body class="h-full">
+  <div id="app" class="h-full w-full overflow-auto relative" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); pb-10">
+    
+    <header class="text-center py-4 sm:py-6 px-4 relative">
+      <h1 id="appTitle" class="text-2xl sm:text-3xl font-900 tracking-tight" style="color:#fbbf24;">🧾 Kasir Matematika</h1>
+      <p class="text-[10px] sm:text-xs font-bold tracking-widest uppercase opacity-70" style="color:#94a3b8;">By Mathnology</p>
+      <p class="text-xs sm:text-sm mt-1 sm:mt-2" style="color:#94a3b8;">Berikan kembalian yang tepat!</p>
+      
+      <button onclick="toggleSettings()" class="absolute top-4 sm:top-5 right-4 p-2 bg-slate-800 text-sky-400 rounded-full shadow-lg border border-slate-700 hover:bg-slate-700 transition z-50">
+        <i data-lucide="settings" style="width:20px;height:20px;" class="sm:w-6 sm:h-6"></i>
+      </button>
+    </header>
+
+    <div class="flex flex-wrap justify-center gap-2 sm:gap-4 px-2 mb-4 sm:mb-6 text-xs sm:text-sm md:text-base max-w-2xl mx-auto">
+      <div class="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl" style="background:#86efac;">
+        <i data-lucide="check-circle" style="color:#15803d;width:16px;height:16px;" class="sm:w-[18px] sm:h-[18px]"></i> 
+        <span style="color:#15803d;font-weight:800;" id="correctCount">0</span> 
+        <span style="color:#166534;" class="hidden sm:inline">Benar</span>
+      </div>
+      <div class="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl" style="background:#fca5a5;">
+        <i data-lucide="x-circle" style="color:#7f1d1d;width:16px;height:16px;" class="sm:w-[18px] sm:h-[18px]"></i> 
+        <span style="color:#7f1d1d;font-weight:800;" id="wrongCount">0</span> 
+        <span style="color:#991b1b;" class="hidden sm:inline">Salah</span>
+      </div>
+      <div class="flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl" style="background:#bfdbfe;border:2px solid #1e40af;">
+        <i data-lucide="zap" style="color:#1e40af;width:16px;height:16px;" class="sm:w-[18px] sm:h-[18px]"></i> 
+        <span style="color:#1e40af;font-weight:800;" id="streakCount">0</span> 
+        <span style="color:#1e3a8a;" class="hidden sm:inline">Streak</span>
+      </div>
+    </div>
+
+    <div class="max-w-xl mx-auto px-4 mb-4 sm:mb-6">
+      <div class="printer-slot"></div>
+      
+      <div id="transactionCard" class="receipt p-4 sm:p-5 anim-print">
+        <div class="flex items-center justify-between mb-3 border-b-2 border-dashed border-slate-300 pb-2">
+          <div class="text-center w-full">
+            <h2 class="font-900 text-slate-800 text-base sm:text-lg uppercase tracking-wider">Supermarket Math</h2>
+            <p class="text-[10px] sm:text-xs text-slate-500 font-bold">Struk Belanja Pelanggan</p>
+          </div>
+        </div>
+
+        <div id="timerDisplay" class="mb-3 hidden text-center">
+          <span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 font-900 rounded-full text-xs sm:text-sm animate-pulse shadow-sm">
+            <i data-lucide="timer" style="width:14px;height:14px;"></i> <span id="timeText">60s</span>
+          </span>
+        </div>
+        
+        <div id="itemsList" class="space-y-1 mb-3 receipt-font text-xs sm:text-[13px]"></div>
+        
+        <hr class="border-t-2 border-dashed border-slate-300 my-3">
+        
+        <div class="space-y-1.5 sm:space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="text-xs sm:text-sm font-800 text-slate-600 uppercase">Total</span> 
+            <span class="text-lg sm:text-xl font-900 text-slate-800" id="totalPrice">Rp 0</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-xs sm:text-sm font-800 text-slate-600 uppercase">Tunai</span> 
+            <span class="text-lg sm:text-xl font-900 text-slate-800" id="paidAmount">Rp 0</span>
+          </div>
+          
+          <div id="paidMoneyImg" class="mt-3 mb-1 max-w-[150px] sm:max-w-[200px] mx-auto hidden">
+            <img id="paidImg" src="" alt="Uang pembayaran" class="w-full h-auto object-contain rounded-md shadow-sm filter drop-shadow-md">
+          </div>
+          
+          <div class="flex justify-between items-center mt-2 pt-2 border-t-2 border-dashed border-slate-300">
+            <span class="text-xs sm:text-sm font-800 text-sky-700 uppercase">Kembali</span> 
+            <span class="text-lg sm:text-xl font-900 text-sky-700">???</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-xl mx-auto px-4 mb-4 sm:mb-6">
+      <div class="rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-lg" style="background:#e0f2fe;border:3px solid #38bdf8;">
+        <div class="flex items-center justify-between mb-2 sm:mb-3">
+          <span class="text-[10px] sm:text-xs font-700 uppercase tracking-widest" style="color:#0c4a6e;">Kembalian Anda</span> 
+          <span class="font-800 text-base sm:text-lg" style="color:#075985;" id="currentChange">Rp 0</span>
+        </div>
+        
+        <div id="changeChips" class="flex flex-wrap gap-1.5 sm:gap-2 min-h-[60px] sm:min-h-[70px] items-center p-1 sm:p-2 transition-all"></div>
+      </div>
+    </div>
+
+    <div class="max-w-xl mx-auto px-4 mb-4 sm:mb-6">
+      <div class="rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-lg" style="background:#fae8ff;border:3px solid #d946ef;">
+        <span class="text-[10px] sm:text-xs font-700 uppercase tracking-widest block mb-2 sm:mb-3" style="color:#6b21a8;">Pilih Uang Kembalian</span>
+        <div id="moneyGrid" class="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3"></div>
+      </div>
+    </div>
+
+    <div class="max-w-xl mx-auto px-4 pb-12 flex gap-2 sm:gap-3">
+      <button id="resetBtn" onclick="resetChange()" class="flex-1 py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-800 flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-base shadow-md transition hover:scale-[1.02]" style="background:#fbbf24;color:#92400e;border:none;"> 
+        <i data-lucide="rotate-ccw" style="width:16px;height:16px;" class="sm:w-[18px] sm:h-[18px]"></i> Reset 
+      </button> 
+      <button id="submitBtn" onclick="submitAnswer()" class="flex-1 py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-900 flex items-center justify-center gap-1 sm:gap-2 text-base sm:text-lg shadow-md transition hover:scale-[1.02]" style="background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#ffffff;border:none;"> 
+        <i data-lucide="check-circle-2" style="width:20px;height:20px;" class="sm:w-[22px] sm:h-[22px]"></i> Serahkan 
+      </button>
+    </div>
+
+    <div id="feedbackOverlay" class="fixed inset-0 flex items-center justify-center z-50 hidden backdrop-blur-sm px-4" style="background:rgba(15, 23, 42, 0.7);">
+      <div id="feedbackCard" class="w-full max-w-sm rounded-2xl p-6 sm:p-8 text-center pop-in shadow-2xl" style="background:#fff9e6;border:4px solid #f59e0b;">
+        <div id="feedbackIcon" class="text-5xl sm:text-6xl mb-2 sm:mb-3 drop-shadow-md"></div>
+        <h2 id="feedbackTitle" class="text-xl sm:text-2xl font-900 mb-2" style="color:#d97706;"></h2>
+        <p id="feedbackMsg" class="mb-4 sm:mb-5 text-sm sm:text-base font-bold" style="color:#78350f;"></p>
+        <button onclick="nextQuestion()" class="w-full px-8 py-3 rounded-xl font-900 shadow-md transition hover:scale-105" style="background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#ffffff;border:none;"> 
+          Lanjut → 
+        </button>
+      </div>
+    </div>
+
+    <div id="settingsOverlay" class="fixed inset-0 flex items-center justify-center z-50 hidden backdrop-blur-sm px-4" style="background:rgba(15, 23, 42, 0.7);">
+      <div class="bg-white rounded-2xl p-5 sm:p-6 w-full max-w-sm shadow-2xl pop-in">
+        <div class="flex justify-between items-center mb-4 sm:mb-5">
+          <h3 class="text-lg sm:text-xl font-900 text-slate-800 flex items-center gap-2">
+            <i data-lucide="settings" class="text-sky-500 w-5 h-5 sm:w-6 sm:h-6"></i> Pengaturan
+          </h3>
+          <button onclick="toggleSettings()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x"></i></button>
+        </div>
+        
+        <div class="space-y-4 sm:space-y-5">
+          <div>
+            <label class="flex items-center justify-between cursor-pointer">
+              <span class="text-slate-700 font-800 text-xs sm:text-sm">Mode Waktu (60 Detik)</span>
+              <div class="relative inline-block w-10 sm:w-12 mr-2 align-middle select-none">
+                <input type="checkbox" id="timeModeToggle" class="toggle-checkbox absolute block w-5 sm:w-6 h-5 sm:h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" style="top: 0px; margin: 0;"/>
+                <label for="timeModeToggle" class="toggle-label block overflow-hidden h-5 sm:h-6 rounded-full bg-gray-300 cursor-pointer transition-all"></label>
+              </div>
+            </label>
+            <p class="text-[10px] sm:text-xs text-slate-500 mt-1">Berpacu melayani pelanggan antre.</p>
+          </div>
+
+          <hr class="border-slate-200">
+
+          <div>
+            <label class="flex items-center justify-between cursor-pointer">
+              <span class="text-slate-700 font-800 text-xs sm:text-sm">Tampilkan Angka</span>
+              <div class="relative inline-block w-10 sm:w-12 mr-2 align-middle select-none">
+                <input type="checkbox" id="showNumbersToggle" checked class="toggle-checkbox absolute block w-5 sm:w-6 h-5 sm:h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" style="top: 0px; margin: 0;"/>
+                <label for="showNumbersToggle" class="toggle-label block overflow-hidden h-5 sm:h-6 rounded-full bg-gray-300 cursor-pointer transition-all"></label>
+              </div>
+            </label>
+            <p class="text-[10px] sm:text-xs text-slate-500 mt-1">Sensor hitungan otomatis (Rp ???).</p>
+          </div>
+
+          <hr class="border-slate-200">
+
+          <div>
+            <label class="flex items-center justify-between cursor-pointer">
+              <span class="text-slate-700 font-800 text-xs sm:text-sm">Mode Sulit</span>
+              <div class="relative inline-block w-10 sm:w-12 mr-2 align-middle select-none">
+                <input type="checkbox" id="hardModeToggle" class="toggle-checkbox absolute block w-5 sm:w-6 h-5 sm:h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" style="top: 0px; margin: 0;"/>
+                <label for="hardModeToggle" class="toggle-label block overflow-hidden h-5 sm:h-6 rounded-full bg-gray-300 cursor-pointer transition-all"></label>
+              </div>
+            </label>
+            <p class="text-[10px] sm:text-xs text-slate-500 mt-1">Harga barang menjadi lebih kompleks.</p>
+          </div>
+        </div>
+
+        <button onclick="applySettings()" class="mt-6 sm:mt-8 w-full py-2.5 sm:py-3 bg-sky-500 text-white font-900 rounded-xl hover:bg-sky-600 shadow-md transition hover:scale-[1.02] text-sm sm:text-base">
+          Simpan & Terapkan
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const BASE = 'https://raw.githubusercontent.com/dosen-uinsi/Kasir-Matematika/refs/heads/main/';
+
+    const DENOMINATIONS = [
+      { value: 100000, label: '100.000', img: '100000.jpg', type: 'paper' },
+      { value: 50000,  label: '50.000',  img: '50000.jpg',  type: 'paper' },
+      { value: 20000,  label: '20.000',  img: '20000.jpg',  type: 'paper' },
+      { value: 10000,  label: '10.000',  img: '10000.jpg',  type: 'paper' },
+      { value: 5000,   label: '5.000',   img: '5000.jpg',   type: 'paper' },
+      { value: 2000,   label: '2.000',   img: '2000.jpg',   type: 'paper' },
+      { value: 1000,   label: '1.000',   img: '1000.jpg',   type: 'paper' },
+      { value: 500,    label: '500',     img: '500.png',    type: 'coin' },
+      { value: 200,    label: '200',     img: '200.png',    type: 'coin' },
+      { value: 100,    label: '100',     img: '100.png',    type: 'coin' },
+    ];
+
+    const ITEMS = [
+      '🍎 Apel','🍌 Pisang','🥚 Telur 1kg','🍞 Roti Tawar','🥛 Susu UHT','🧈 Mentega','☕ Kopi Bubuk','🍜 Mie Instan',
+      '🧴 Sabun Mandi','🪥 Sikat Gigi','📓 Buku Tulis','✏️ Pensil 2B','🍫 Coklat Batang','🍬 Permen Manis','🧃 Jus Kotak',
+      '🍪 Biskuit','🧊 Es Krim','🥤 Minuman Soda','🍚 Beras 1kg','🫖 Teh Celup'
+    ];
+
+    const PAYMENT_DENOMS = [100000, 50000, 20000, 10000, 5000];
+
+    let state = { correct: 0, wrong: 0, streak: 0, totalPrice: 0, paidWith: 0, changeGiven: [], level: 1 };
+    let configSettings = { showNumbers: true, hardMode: false, timeMode: false };
+    
+    // Timer System
+    let timerInterval;
+    let timeLeft = 60;
+
+    // --- Audio Synthesis System (Web Audio API) ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playTone(freq, type, duration, vol=0.05) {
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch(e) {}
+    }
+
+    // Efek khusus suara kertas (White Noise/Srek)
+    function playNoise(duration, vol) {
+      try {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const bufferSize = audioCtx.sampleRate * duration;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.value = 1000;
+        
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+        noise.start();
+      } catch(e) {}
+    }
+    
+    function playSound(type) {
+      if(audioCtx.state === 'suspended') audioCtx.resume();
+      if (type === 'coin') {
+        playTone(1800, 'sine', 0.1, 0.08);
+        setTimeout(() => playTone(2200, 'sine', 0.15, 0.08), 40);
+      } else if (type === 'paper') {
+        playNoise(0.12, 0.3); // Suara Srek/Kertas
+      } else if (type === 'tick') {
+        playTone(600, 'square', 0.05, 0.02); // Suara Waktu Menipis
+      } else if (type === 'win') {
+        playTone(523.25, 'sine', 0.1, 0.1); 
+        setTimeout(() => playTone(659.25, 'sine', 0.1, 0.1), 100); 
+        setTimeout(() => playTone(783.99, 'sine', 0.1, 0.1), 200); 
+        setTimeout(() => playTone(1046.50, 'sine', 0.3, 0.1), 300); 
+      } else if (type === 'lose') {
+        playTone(300, 'sawtooth', 0.2, 0.1);
+        setTimeout(() => playTone(280, 'sawtooth', 0.2, 0.1), 200);
+        setTimeout(() => playTone(250, 'sawtooth', 0.4, 0.1), 400);
+      }
+    }
+
+    // --- Core Logic ---
+    function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+    function fmt(n) { return 'Rp ' + n.toLocaleString('id-ID'); }
+
+    function toggleSettings() {
+      document.getElementById('settingsOverlay').classList.toggle('hidden');
+    }
+
+    function applySettings() {
+      configSettings.showNumbers = document.getElementById('showNumbersToggle').checked;
+      configSettings.hardMode = document.getElementById('hardModeToggle').checked;
+      configSettings.timeMode = document.getElementById('timeModeToggle').checked;
+      
+      toggleSettings();
+      state.correct = 0; state.wrong = 0; state.streak = 0; state.level = 1;
+      document.getElementById('correctCount').textContent = state.correct;
+      document.getElementById('wrongCount').textContent = state.wrong;
+      document.getElementById('streakCount').textContent = state.streak;
+      generateQuestion();
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      const timerDisplay = document.getElementById('timerDisplay');
+      const timeText = document.getElementById('timeText');
+      
+      if (configSettings.timeMode) {
+        timeLeft = 60;
+        timerDisplay.classList.remove('hidden');
+        timeText.textContent = timeLeft + 's';
+        timeText.parentNode.classList.remove('bg-red-100', 'text-red-700');
+        timeText.parentNode.classList.add('bg-slate-100', 'text-slate-700');
+        
+        timerInterval = setInterval(() => {
+          timeLeft--;
+          timeText.textContent = timeLeft + 's';
+          
+          if (timeLeft <= 10) {
+            timeText.parentNode.classList.remove('bg-slate-100', 'text-slate-700');
+            timeText.parentNode.classList.add('bg-red-100', 'text-red-700');
+            playSound('tick');
+          }
+          
+          if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            submitAnswer(true); 
+          }
+        }, 1000);
+      } else {
+        timerDisplay.classList.add('hidden');
+      }
+    }
+
+    function generateQuestion() {
+      const card = document.getElementById('transactionCard');
+      card.classList.remove('anim-print');
+      void card.offsetWidth; 
+      card.classList.add('anim-print');
+      
+      let total = 0;
+      let items = [];
+      do {
+        items = []; total = 0;
+        const numItems = state.level < 3 && !configSettings.hardMode ? rand(1, 2) : rand(2, 4);
+        const usedNames = new Set();
+        for (let i = 0; i < numItems; i++) {
+          let name; do { name = ITEMS[rand(0, ITEMS.length - 1)]; } while (usedNames.has(name));
+          usedNames.add(name);
+          let price = configSettings.hardMode ? rand(15, 200) * 100 : (state.level <= 2 ? rand(1, 15) * 1000 : (state.level <= 4 ? rand(1, 50) * 500 : rand(5, 99) * 500));
+          const qty = rand(1, state.level < 3 && !configSettings.hardMode ? 1 : 3);
+          items.push({ name, price, qty });
+        }
+        total = items.reduce((s, i) => s + i.price * i.qty, 0);
+      } while (total >= 100000 || total === 0);
+
+      const validPayments = PAYMENT_DENOMS.filter(d => d > total);
+      const paid = validPayments.length ? validPayments[rand(0, Math.min(validPayments.length - 1, 2))] : PAYMENT_DENOMS[0];
+      state.totalPrice = total; state.paidWith = paid; state.changeGiven = [];
+
+      const listEl = document.getElementById('itemsList');
+      listEl.innerHTML = items.map(i => `
+        <div class="flex justify-between items-center">
+          <span>${i.name} ${i.qty > 1 ? '<span class="text-slate-400">x'+i.qty+'</span>' : ''}</span>
+          <span class="font-bold text-slate-800">${fmt(i.price * i.qty)}</span>
+        </div>
+      `).join('');
+      
+      document.getElementById('totalPrice').textContent = configSettings.showNumbers ? fmt(total) : 'Rp ???';
+      document.getElementById('paidAmount').textContent = configSettings.showNumbers ? fmt(paid) : 'Rp ???';
+
+      const paidDenom = DENOMINATIONS.find(d => d.value === paid);
+      const paidImgDiv = document.getElementById('paidMoneyImg');
+      const paidImgEl = document.getElementById('paidImg');
+      if (paidDenom) { paidImgEl.src = BASE + paidDenom.img; paidImgDiv.classList.remove('hidden'); }
+      
+      updateChangeDisplay();
+      startTimer();
+    }
+
+    function buildMoneyGrid() {
+      const grid = document.getElementById('moneyGrid');
+      grid.innerHTML = DENOMINATIONS.map(d => `
+        <button type="button" class="money-btn rounded-lg sm:rounded-xl p-1.5 sm:p-2 flex flex-col items-center justify-center bg-white shadow-sm" style="border:3px solid #d946ef;" onclick="addChange(${d.value}, '${d.type}')">
+          <img src="${BASE + d.img}" class="money-img-grid">
+          <span class="text-[10px] sm:text-xs font-900 mt-1 sm:mt-2" style="color:#d946ef;">${d.label}</span>
+        </button>
+      `).join('');
+    }
+
+    function addChange(value, type) {
+      if (state.changeGiven.length >= 30) { 
+        document.getElementById('changeChips').classList.add('shake'); 
+        setTimeout(() => document.getElementById('changeChips').classList.remove('shake'), 400); 
+        return; 
+      }
+      playSound(type);
+      state.changeGiven.push(value); 
+      updateChangeDisplay();
+    }
+
+    function removeChange(index, type) { 
+      playSound(type);
+      state.changeGiven.splice(index, 1); 
+      updateChangeDisplay(); 
+    }
+
+    function updateChangeDisplay() {
+      const total = state.changeGiven.reduce((s, v) => s + v, 0);
+      document.getElementById('currentChange').textContent = configSettings.showNumbers ? fmt(total) : 'Rp ???';
+      const container = document.getElementById('changeChips');
+      if (state.changeGiven.length === 0) { container.innerHTML = '<span style="color:#0369a1;" class="text-[11px] sm:text-[13px] pop-in font-bold">Pilih uang kembalian...</span>'; return; }
+      
+      container.innerHTML = state.changeGiven.map((v, i) => { 
+        const d = DENOMINATIONS.find(den => den.value === v); 
+        return `<img src="${BASE + d.img}" onclick="removeChange(${i}, '${d.type}')" class="pop-in pure-money">`; 
+      }).join('');
+    }
+
+    function resetChange() { 
+      playSound('paper');
+      state.changeGiven = []; 
+      updateChangeDisplay(); 
+    }
+
+    function submitAnswer(isTimeout = false) {
+      clearInterval(timerInterval); 
+      
+      const given = state.changeGiven.reduce((s, v) => s + v, 0);
+      const expected = state.paidWith - state.totalPrice;
+      const overlay = document.getElementById('feedbackOverlay');
+      const icon = document.getElementById('feedbackIcon');
+      const title = document.getElementById('feedbackTitle');
+      const msg = document.getElementById('feedbackMsg');
+      
+      if (isTimeout) {
+        playSound('lose');
+        state.wrong++; state.streak = 0; 
+        icon.textContent = '⏱️'; title.textContent = 'Waktu Habis!'; title.style.color = '#ef4444'; 
+        msg.textContent = `Pelanggan bosan menunggu. Kembalian seharusnya ${fmt(expected)}.`;
+      }
+      else if (given === expected) { 
+        playSound('win');
+        state.correct++; state.streak++; 
+        if (state.streak % 3 === 0 && state.level < 6 && !configSettings.hardMode) state.level++; 
+        icon.textContent = '👍'; title.textContent = 'Tepat Sekali!'; title.style.color = '#10b981'; 
+        msg.textContent = `Kembalian ${fmt(expected)} sudah benar.`; 
+        spawnConfetti(); 
+      } 
+      else { 
+        playSound('lose');
+        state.wrong++; state.streak = 0; 
+        icon.textContent = '😅'; title.textContent = 'Belum Tepat'; title.style.color = '#ef4444'; 
+        msg.textContent = `Kembalian seharusnya ${fmt(expected)}, kamu memberikan ${fmt(given)}.`; 
+      }
+      
+      document.getElementById('correctCount').textContent = state.correct; 
+      document.getElementById('wrongCount').textContent = state.wrong; 
+      document.getElementById('streakCount').textContent = state.streak; 
+      overlay.classList.remove('hidden');
+    }
+
+    function nextQuestion() { 
+      document.getElementById('feedbackOverlay').classList.add('hidden'); 
+      generateQuestion(); 
+    }
+
+    function spawnConfetti() {
+      const colors = ['#f59e0b','#4ade80','#38bdf8','#c084fc','#f87171','#fb923c'];
+      for (let i = 0; i < 30; i++) {
+        const el = document.createElement('div'); el.className = 'confetti-piece'; el.style.left = rand(10, 90) + '%'; el.style.top = rand(10, 40) + '%'; el.style.background = colors[rand(0, colors.length - 1)]; el.style.animationDelay = (rand(0, 500) / 1000) + 's'; document.body.appendChild(el); setTimeout(() => el.remove(), 2000);
+      }
+    }
+
+    // Init First Load
+    buildMoneyGrid(); 
+    generateQuestion(); 
+    lucide.createIcons();
+    
+    // Unlock Audio Context on First Interaction
+    document.body.addEventListener('click', () => {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }, {once:true});
+  </script>
+</body>
+</html>
