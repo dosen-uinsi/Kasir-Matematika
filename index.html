@@ -153,18 +153,18 @@
       </div>
     </div>
 
-    <div class="max-w-xl mx-auto px-4 mb-4 sm:mb-6 mt-4">
+    <div id="avatarContainer" class="flex justify-center mb-1 hidden z-10 relative">
+      <div class="bg-white rounded-full p-2 border-4 border-slate-300 shadow-md">
+        <span id="customerFace" class="text-5xl sm:text-6xl inline-block drop-shadow-sm transition-transform duration-300">😊</span>
+      </div>
+    </div>
+
+    <div class="max-w-xl mx-auto px-4 mb-4 sm:mb-6 relative">
       <div class="printer-slot"></div>
       
-      <div id="transactionCard" class="receipt p-4 sm:p-5 anim-print pt-8">
+      <div id="transactionCard" class="receipt p-4 sm:p-5 anim-print">
         
-        <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30">
-          <div class="bg-slate-100 rounded-full p-1.5 border-4 border-slate-300 shadow-lg">
-            <span id="customerFace" class="text-4xl sm:text-5xl inline-block drop-shadow-sm transition-transform duration-300">😊</span>
-          </div>
-        </div>
-
-        <div class="flex items-center justify-between mb-3 border-b-2 border-dashed border-slate-300 pb-2 mt-2">
+        <div class="flex items-center justify-between mb-3 border-b-2 border-dashed border-slate-300 pb-2">
           <div class="text-center w-full">
             <h2 class="font-900 text-slate-800 text-base sm:text-lg uppercase tracking-wider">Supermarket Math</h2>
             <p class="text-[10px] sm:text-xs text-slate-500 font-bold">Struk Belanja Pelanggan</p>
@@ -403,7 +403,7 @@
       } else if (state === 'win') {
         face.textContent = '🤩';
       } else if (state === 'gone') {
-        face.textContent = '💨'; // Waktu habis, kabur
+        face.textContent = '💨'; 
       }
     }
 
@@ -428,9 +428,11 @@
       clearInterval(timerInterval);
       const timerDisplay = document.getElementById('timerDisplay');
       const timeText = document.getElementById('timeText');
-      setEmotion('happy');
+      const avatarContainer = document.getElementById('avatarContainer');
       
       if (configSettings.timeMode) {
+        avatarContainer.classList.remove('hidden'); // Memunculkan Avatar
+        setEmotion('happy');
         timeLeft = 60;
         timerDisplay.classList.remove('hidden');
         timeText.textContent = timeLeft + 's';
@@ -457,6 +459,7 @@
         }, 1000);
       } else {
         timerDisplay.classList.add('hidden');
+        avatarContainer.classList.add('hidden'); // Sembunyikan Avatar
       }
     }
 
@@ -579,7 +582,7 @@
         state.correct++; state.streak++; 
         if (state.streak % 3 === 0 && state.level < 6 && !configSettings.hardMode) state.level++; 
         
-        icon.textContent = '🤩'; title.textContent = 'Tepat Sekali!'; title.style.color = '#10b981'; 
+        icon.textContent = '👍'; title.textContent = 'Tepat Sekali!'; title.style.color = '#10b981'; 
         msg.textContent = `Kembalian ${fmt(expected)} sudah benar. Pelanggan sangat senang!`; 
         spawnConfetti(); 
       } 
